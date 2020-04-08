@@ -1,0 +1,56 @@
+[
+  {
+    "aliases":[],
+    "name": "awaiting feedback",
+    "description": "Awaiting a response from a customer. Will be automatically closed after approximately 2 weeks.",
+    "color": "#bfd4f2"
+  },
+  {
+    "aliases":[],
+    "name": "needs discussion",
+    "description": "Requires internal analysis/discussion",
+    "color": "#8fd0d6"
+  },
+  {
+    "aliases":[],
+    "name": "bug",
+    "description": "Confirmed bug",
+    "color": "#db252b"
+  },
+  {
+    "aliases":[],
+    "name": "feature request",
+    "description": "Request for a new feature",
+    "color": "#dc95f0"
+  },
+  {
+    "aliases":[],
+    "name": "duplicate",
+    "description": "Closed as feature/bug is a duplicate",
+    "color": "#cccccc"
+  },
+  {
+    "aliases":[],
+    "name": "won't do",
+    "description": "This is not something we plan to implement",
+    "color": "#f5a133"
+  },
+  {
+    "aliases":[],
+    "name": "backlog",
+    "description": "We hope to fix this feature/bug in the future",
+    "color": "#25049b"
+  },
+  {
+    "aliases":[],
+    "name": "scheduled",
+    "description": "Work is starting on this feature/bug",
+    "color": "#d9fca1"
+  },
+  {
+    "aliases":[],
+    "name": "released",
+    "description": "This feature/bug has been released",
+    "color": "#1ea617"
+  }
+]
