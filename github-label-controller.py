@@ -100,13 +100,15 @@ def _scan_repos(auth, repositories, local_labels, execute):
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser(description='Make GitHub labels from definitions in labels/')
-    p.add_argument('-v', '--verbose', help='Turn on verbose logging', action='store_true')
-    p.add_argument('-r', '--repos', help='GitHub repository scheme, a .json list of owners and repos to parse through appling labels', required=True)
-    p.add_argument('-l', '--labels', help='GitHub label scheme, .json list file from /labels directory', required=True)
-    p.add_argument('-t', '--token', help='GitHub personal access token', required=True)
-    p.add_argument('-e', '--execute', help='Execute the changes. Without this only a dry-run is completed', action='store_true')
-    args = p.parse_args()
+    parser = argparse.ArgumentParser(description='Make GitHub labels from definitions in labels/')
+    required_args = parser.add_argument_group('required arguments')
+    required_args.add_argument('-r', '--repos', help='GitHub repository scheme (.json)', required=True)
+    required_args.add_argument('-l', '--labels', help='GitHub label scheme (.json)', required=True)
+    required_args.add_argument('-t', '--token', help='GitHub personal access token', required=True)
+    optional_args = parser.add_argument_group('optional arguments')
+    optional_args.add_argument('-e', '--execute', help='Execute the changes. Without this only a dry-run happens', action='store_true')
+    optional_args.add_argument('-v', '--verbose', help='Turn on verbose logging', action='store_true')
+    args = parser.parse_args()
 
     print("\r\n>> github-label-maker.py —— Xander Jones —— v" + _VERSION)
 
