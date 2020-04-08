@@ -126,6 +126,7 @@ if __name__ == "__main__":
         print(">> {0} labels have been loaded".format(str(len(labels))))
     else:
         logging.error("File '{0}' does not exist".format(args.labels))
+        exit(1)
 
     print("\r\nLOADING REPOS SCHEME")
     if os.path.exists(args.repos):
@@ -135,14 +136,14 @@ if __name__ == "__main__":
         print(">> {0} repositories have been loaded".format(str(len(repositories))))
     else:
         logging.error("File '" + args.repos + "' does not exist")
+        exit(1)
 
     print("\r\nCONNECTING TO GITHUB")
     gh = glm.GithubAuthenticator(args.token)
     if gh.is_authenticated():
         print(">> Authorized to GitHub as user '{0}'".format(gh.get_username()))
         print(">> Rate limit: {0}, remaining: {1}".format(gh.get_rate_limit().core.limit, gh.get_rate_limit().core.remaining))
-
         _scan_repos(gh.get_auth(), repositories, labels, args.execute)
-
     else:
         print("\r\n>> Unable to authenticate with GitHub - script exiting")
+        exit(1)
