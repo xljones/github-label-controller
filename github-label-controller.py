@@ -143,7 +143,15 @@ if __name__ == "__main__":
     if gh.is_authenticated():
         print(">> Authorized to GitHub as user '{0}'".format(gh.get_username()))
         print(">> Rate limit: {0}, remaining: {1}".format(gh.get_rate_limit().core.limit, gh.get_rate_limit().core.remaining))
-        _scan_repos(gh.get_auth(), repositories, labels, args.execute)
+        if (args.execute):
+            approve = input("You've enabled --execute for this. Are you sure you want to make changes? [Y/n]: ")
+            if (approve.lower() == "y"):
+                _scan_repos(gh.get_auth(), repositories, labels, args.execute)
+            else:
+                print(">> User did not authorize changes")
+                exit(1)
+        else:
+            _scan_repos(gh.get_auth(), repositories, labels, args.execute)
     else:
         print("\r\n>> Unable to authenticate with GitHub - script exiting")
         exit(1)
