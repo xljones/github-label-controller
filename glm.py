@@ -1,9 +1,10 @@
-# glm.py - GitHub Labels Maker module for easy labels management
 #
-# Written by Mateusz Loskot <mateusz at loskot dot net>
-# Forked and updated by Xander Jones to enable aliases, and multiple repository configuration
+# github-label-controller
 #
-# This is free and unencumbered software released into the public domain.
+# Xander Jones [2020]
+# Bugsnag
+#
+# This is based on the github-label-maker (https://github.com/mloskot/github-label-maker)
 #
 import logging
 import github
@@ -136,3 +137,8 @@ class GithubLabelMaker:
                 label_def['description'] = label.description
             labels_def.append(label_def)
         return labels_def
+
+    def get_issues(self, label):
+        lbl = self._repo.get_label(label["name"])   # this could be made more efficient if we build the label type manually.
+        issues = self._repo.get_issues(state='open',sort='created',direction='asc',labels=[lbl])
+        return issues
