@@ -18,17 +18,17 @@ _VERSION = "1.0.0"
 def _check_labels_match(lm, repo_label, local_label, old_name):
     edit_required = False
     if repo_label['description'] == local_label['description']:
-        print("        ├── ✅ The description matches, no changes")
+        print("        ├── ⚪️ The description matches, no changes")
     else:
         edit_required = True
-        print("        └── ❌ The description does not match")
+        print("        └── 🔵 The description does not match")
         print("            ├── Scheme description:  '{0}'".format(local_label['description']))
         print("            └── will overwrite:      '{0}'".format(repo_label['description']))
     if repo_label['color'] == local_label['color']:
-        print("        └── ✅ The color matches ({0}), no changes".format(repo_label['color']))
+        print("        └── ⚪️ The color matches ({0}), no changes".format(repo_label['color']))
     else:
         edit_required = True
-        print("        └── ❌ The color does not match.")
+        print("        └── 🔵 The color does not match.")
         print("            ├── Scheme color:    {0}".format(local_label['color']))
         print("            └── will overwrite:  {0}".format(repo_label['color']))
     if not repo_label['name'] == local_label['name']:
@@ -57,7 +57,7 @@ def _scan_repos(auth, repositories, local_labels, execute):
             for index, local_label in enumerate(local_labels):
                 if repo_label['name'] == local_label['name']:
                     print("    └── {0} (local label)".format(local_label['name']))
-                    print("        ├── ✅ The name matches, no changes")
+                    print("        ├── ⚪️ The name matches, no changes")
                     edit_required = _check_labels_match(lm, repo_label, local_label, None)
                     label_scheme_found = local_label
                     local_labels[index]['repo_match'] = True
@@ -65,7 +65,7 @@ def _scan_repos(auth, repositories, local_labels, execute):
                     for local_alias in local_label['aliases']:
                         if repo_label['name'] == local_alias:
                             print("    └── {0} (alias of '{1}')".format(local_alias, local_label['name']))
-                            print("        └── ❌ The name doesn't match")
+                            print("        └── 🔵 The name doesn't match")
                             print("            ├── Scheme name:     '{0}'".format(local_label['name']))
                             print("            └── will overwrite:  '{0}'".format(repo_label['name']))
                             edit_required = _check_labels_match(lm, repo_label, local_label, repo_label['name'])
@@ -74,11 +74,16 @@ def _scan_repos(auth, repositories, local_labels, execute):
                             break
             if label_scheme_found == None:
                 _count_missing_from_scheme += 1
-                print("    └── ⚠️  No local label or alias was found for this repo label")
+                print("    └── 🔴 No local label or alias was found for this repo label")
             elif label_scheme_found and edit_required:
                 _count_require_updates += 1
                 if execute:
-                    lm.edit_label(label_scheme_found, repo_label['name'])
+                    try:
+                        lm.edit_label(label_scheme_found, repo_label['name'])
+                    except Exception as e:
+                        print("    └── ❌ Error updating label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                    else:
+                        print("    └── ✅ Success: this label has been updated")
             else:
                 _count_correct += 1
 
@@ -86,17 +91,23 @@ def _scan_repos(auth, repositories, local_labels, execute):
             if not local_label['repo_match']:
                 _count_missing_from_repo += 1
                 print("└── {0}".format(local_label['name']))
-                print("    └── ❌ This label was found in scheme, but not in repo, it will be created with".format(local_label['name']))
+                print("    └── 🔵 This label was found in scheme, but not in repo, it will be created with".format(local_label['name']))
                 print("        ├── color:        '{0}'".format(local_label['color']))
                 print("        └── description:  '{0}'".format(local_label['description']))
                 if execute:
-                    lm.add_label(local_label)
+                    try:
+                        lm.add_label(local_label)
+                    except Exception as e:
+                        print("    └── ❌ Error adding label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                    else:
+                        print("    └── ✅ Success: this label has been added")
+
     if not execute:
-        print("\r\nACCROSS ALL REPOS: ")
-        print(">> ✅ Labels correct:      {0} (no changes)".format(_count_correct))
-        print(">> ⚠️  Missing from scheme: {0} (will be ignored)".format(_count_missing_from_scheme))
-        print(">> ❌ Missing from repo:   {0} (will be added with -e/--execute option)".format(_count_missing_from_repo))
-        print(">> ❌ Needing updates:     {0} (will be updated with -e/--execute option)".format(_count_require_updates))
+        print("\r\nACROSS ALL REPOS: ")
+        print(">> ⚪️ Labels correct:      {0} (no changes)".format(_count_correct))
+        print(">> 🔴 Missing from scheme: {0} (will be ignored)".format(_count_missing_from_scheme))
+        print(">> 🔵 Missing from repo:   {0} (will be added with -e/--execute option)".format(_count_missing_from_repo))
+        print(">> 🔵 Needing updates:     {0} (will be updated with -e/--execute option)".format(_count_require_updates))
 
 
 if __name__ == "__main__":
