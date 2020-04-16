@@ -1,9 +1,10 @@
-# github-label-controller.py - sane labels for GitHub made easy
 #
-# Written by Mateusz Loskot <mateusz at loskot dot net>
-# Updated by Xander Jones to enable aliases, and multiple repository configuration
+# github-label-controller
 #
-# This is free and unencumbered software released into the public domain.
+# Xander Jones [2020]
+# Bugsnag
+#
+# This is based on the github-label-maker (https://github.com/mloskot/github-label-maker)
 #
 import argparse
 import json
@@ -15,10 +16,56 @@ import github
 
 _VERSION = "1.0.0"
 
-def _label_no_issues(label):
-    return True
+'''
+    Load the label scheme. This should be a JSON list of "owner" and
+    "repository" bundled keys'. If the file does not exist, the script will exit.
 
-def _label_needs_editing(lm, repo_label, scheme_label, old_name):
+    Arguments:
+        args: the user provided arguments from the main thread
+'''
+def _load_labels_scheme(args):
+    print("\r\n🏷️  LOADING LABELS SCHEME")
+    if os.path.exists(args.labels):
+        print("├── Using '{0}' label scheme".format(args.labels))
+        with open(args.labels, 'r') as file:
+            labels = json.load(file)
+        print("└── {0} labels have been loaded".format(str(len(labels))))
+        return labels
+    else:
+        print("└── File '{0}' does not exist".format(args.labels))
+        exit(1)
+
+'''
+    Load the repository scheme. This should be a JSON list of "aliases" (list),
+    "name", "description", and "color" bundled keys. If the file does not exist,
+    the script will exit.
+
+    Arguments:
+        args: the user provided arguments from the main thread
+'''
+def _load_repos_scheme(args):
+    print("\r\n🗄️  LOADING REPOS SCHEME")
+    if os.path.exists(args.repos):
+        print("├── Using '{0}' repository scheme".format(args.repos))
+        with open(args.repos, 'r') as file:
+            repositories = json.load(file)
+        print("└── {0} repositories have been loaded".format(str(len(repositories))))
+        return repositories
+    else:
+        print("└── File '{0}' does not exist".format(args.repos))
+        exit(1)
+
+'''
+    A check to see if, for a given label 'repo_label', does it need to be edited
+    to comply with the 'scheme_label'. This checks for the color and description
+    only. Returns True if edit is required, returns False if not.
+
+    Arguments:
+        lm: the github label maker object
+        repo_label: the label of the repository to be compared
+        scheme_label: the label from the scheme to be compared.
+'''
+def _label_diff_check(lm, repo_label, scheme_label):
     edit_required = False
     if repo_label['description'] == scheme_label['description']:
         print("        ├── ⚪️ The description matches, no changes")
@@ -38,7 +85,22 @@ def _label_needs_editing(lm, repo_label, scheme_label, old_name):
         edit_required = True
     return edit_required
 
-def _scan_repos(auth, repositories, scheme_labels, execute):
+'''
+    Main called function which for a list of repositories, will scan through
+    each checking the labels agains the label scheme to see what changes need
+    to be made. If the -e (execute) option is enabled, the changes will be made
+    for edits and addition of labels. If -e (execute) and -d (delete) options
+    are enabled, additionally to editing and adding, labels not found in the
+    scheme will be deleted from the repo; if and only if they are not linked to
+    an open Issue or Pull Request.
+
+    Arguments:
+        auth: the GitHub authorization object produced using glm.GithubAuthenticator()
+        repositories: a list of the repositories (loaded through the JSON scheme)
+        scheme_labels: a list of the labels to apply (loaded through the JSON scheme)
+        args: the user provided arguments from the main thread
+'''
+def _scan_repos(auth, repositories, scheme_labels, args):
     _count_correct = 0
     _count_missing_from_scheme = 0
     _count_missing_from_repo = 0
@@ -61,7 +123,7 @@ def _scan_repos(auth, repositories, scheme_labels, execute):
                 if repo_label['name'] == scheme_label['name']:
                     print("    └── {0} (scheme label)".format(scheme_label['name']))
                     print("        ├── ⚪️ The name matches, no changes")
-                    edit_required = _label_needs_editing(lm, repo_label, scheme_label, None)
+                    edit_required = _label_diff_check(lm, repo_label, scheme_label)
                     label_scheme_found = scheme_label
                     scheme_labels[index]['repo_match'] = True
                 else:
@@ -71,21 +133,31 @@ def _scan_repos(auth, repositories, scheme_labels, execute):
                             print("        └── 🔵 The name doesn't match")
                             print("            ├── Scheme name:     '{0}'".format(scheme_label['name']))
                             print("            └── will overwrite:  '{0}'".format(repo_label['name']))
-                            edit_required = _label_needs_editing(lm, repo_label, scheme_label, repo_label['name'])
+                            edit_required = _label_diff_check(lm, repo_label, scheme_label)
                             label_scheme_found = scheme_label
                             scheme_labels[index]['repo_match'] = True
                             break
             if label_scheme_found == None:
                 _count_missing_from_scheme += 1
-                print("    └── 🔴 No scheme label or alias was found for this repo label")
-
+                print("    └── 🔴 No scheme label or alias was found for this repo label, it will be deleted")
+                if (args.execute and args.delete):
+                    linked_issues = lm.get_issues(repo_label).totalCount
+                    if linked_issues == 0:
+                        try:
+                            lm.delete_label(repo_label['name'])
+                        except Exception as e:
+                            print("    └── ⚠️  Error deleting label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                        else:
+                            print("    └── ✅ Success: this label has been deleted")
+                    else:
+                        print("    └── ⚠️  Label not deleted, there are {0} open issues or PRs".format(linked_issues))
             elif label_scheme_found and edit_required:
                 _count_require_updates += 1
-                if execute:
+                if args.execute:
                     try:
                         lm.edit_label(label_scheme_found, repo_label['name'])
                     except Exception as e:
-                        print("    └── ❌ Error updating label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                        print("    └── ⚠️  Error updating label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
                     else:
                         print("    └── ✅ Success: this label has been updated")
             else:
@@ -98,7 +170,7 @@ def _scan_repos(auth, repositories, scheme_labels, execute):
                 print("    └── 🔵 This label was found in scheme, but not in repo, it will be created with".format(scheme_label['name']))
                 print("        ├── color:        '{0}'".format(scheme_label['color']))
                 print("        └── description:  '{0}'".format(scheme_label['description']))
-                if execute:
+                if args.execute:
                     try:
                         lm.add_label(scheme_label)
                     except Exception as e:
@@ -106,22 +178,26 @@ def _scan_repos(auth, repositories, scheme_labels, execute):
                     else:
                         print("    └── ✅ Success: this label has been added")
 
-    if not execute:
-        print("\r\nACROSS ALL REPOS: ")
-        print(">> ⚪️ Labels correct:      {0} (no changes)".format(_count_correct))
-        print(">> 🔴 Missing from scheme: {0} (will be ignored)".format(_count_missing_from_scheme))
-        print(">> 🔵 Missing from repo:   {0} (will be added with -e/--execute option)".format(_count_missing_from_repo))
-        print(">> 🔵 Needing updates:     {0} (will be updated with -e/--execute option)".format(_count_require_updates))
+    if not args.execute:
+        print("\r\n🌐 ACROSS ALL REPOS: ")
+        print("├── ⚪️ Labels correct:      {0} (no changes)".format(_count_correct))
+        print("├── 🔴 Missing from scheme: {0} (will be deleted, if not linked issues with -e/--execute AND -d/--delete options)".format(_count_missing_from_scheme))
+        print("├── 🔵 Missing from repo:   {0} (will be added with -e/--execute option)".format(_count_missing_from_repo))
+        print("└── 🔵 Needing updates:     {0} (will be updated with -e/--execute option)".format(_count_require_updates))
 
-
+'''
+    Entry point to script. This is not designed to be imported into another
+    script. Alert the user if this happens.
+'''
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Make GitHub labels from definitions in labels/')
     required_args = parser.add_argument_group('required arguments')
-    required_args.add_argument('-r', '--repos', help='GitHub repository scheme (.json)', required=True)
-    required_args.add_argument('-l', '--labels', help='GitHub label scheme (.json)', required=True)
-    required_args.add_argument('-t', '--token', help='GitHub personal access token', required=True)
+    required_args.add_argument('-r', '--repos', help='GitHub repository scheme. A JSON list of "owner" and "repository" bundled keys', required=True)
+    required_args.add_argument('-l', '--labels', help='GitHub label scheme. A JSON list of "aliases" (list), "name", "description", and "color" bundled keys', required=True)
+    required_args.add_argument('-t', '--token', help='GitHub personal access token. Generated here: https://github.com/settings/tokens', required=True)
     optional_args = parser.add_argument_group('optional arguments')
     optional_args.add_argument('-e', '--execute', help='Execute the changes. Without this only a dry-run happens', action='store_true')
+    optional_args.add_argument('-d', '--delete', help='Deletes any repo that is not associated with the scheme, and has not associated open issues or PRs', action='store_true')
     optional_args.add_argument('-v', '--verbose', help='Turn on verbose logging', action='store_true')
     args = parser.parse_args()
 
@@ -130,43 +206,29 @@ if __name__ == "__main__":
     if args.verbose:
         glm.set_verbose_logging()
 
-    repositories = []
-    labels = []
+    labels = _load_labels_scheme(args)
+    repositories = _load_repos_scheme(args)
 
-    print("\r\nLOADING LABELS SCHEME")
-    if os.path.exists(args.labels):
-        print(">> Using '{0}' label scheme".format(args.labels))
-        with open(args.labels, 'r') as file:
-            labels = json.load(file)
-        print(">> {0} labels have been loaded".format(str(len(labels))))
-    else:
-        logging.error("File '{0}' does not exist".format(args.labels))
-        exit(1)
-
-    print("\r\nLOADING REPOS SCHEME")
-    if os.path.exists(args.repos):
-        print(">> Using '{0}' repository scheme".format(args.repos))
-        with open(args.repos, 'r') as file:
-            repositories = json.load(file)
-        print(">> {0} repositories have been loaded".format(str(len(repositories))))
-    else:
-        logging.error("File '" + args.repos + "' does not exist")
-        exit(1)
-
-    print("\r\nCONNECTING TO GITHUB")
+    print("\r\n🌐 CONNECTING TO GITHUB")
     gh = glm.GithubAuthenticator(args.token)
+
     if gh.is_authenticated():
-        print(">> Authorized to GitHub as user '{0}'".format(gh.get_username()))
-        print(">> Rate limit: {0}, remaining: {1}".format(gh.get_rate_limit().core.limit, gh.get_rate_limit().core.remaining))
-        if (args.execute):
-            approve = input("You've enabled --execute for this. Are you sure you want to make changes? [Y/n]: ")
-            if (approve.lower() == "y"):
-                _scan_repos(gh.get_auth(), repositories, labels, args.execute)
-            else:
+        print("├── Authorized to GitHub as user '{0}'".format(gh.get_username()))
+        print("└── Rate limit: {0}, remaining: {1}".format(gh.get_rate_limit().core.limit, gh.get_rate_limit().core.remaining))
+        if args.execute:
+            approve = input("🔒  You've enabled --execute. This will update and add new labels. Are you sure? [Y/n]: ")
+            if not approve.lower() == "y":
                 print(">> User did not authorize changes")
                 exit(1)
-        else:
-            _scan_repos(gh.get_auth(), repositories, labels, args.execute)
+        if args.delete:
+            approve = input("🔒  You've enabled --delete. This will delete labels that do not match the scheme and have no associated open issues/PRs. Are you sure? [Y/n]: ")
+            if not approve.lower() == "y":
+                print(">> User did not authorize changes")
+                exit(1)
+        _scan_repos(gh.get_auth(), repositories, labels, args)
+
     else:
-        print("\r\n>> Unable to authenticate with GitHub - script exiting")
+        print("└── Unable to authenticate with GitHub - script exiting")
         exit(1)
+else:
+    print("Error: This script should be invoked directly")
