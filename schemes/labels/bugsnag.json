@@ -30,7 +30,7 @@
     "color": "#cccccc"
   },
   {
-    "aliases":[],
+    "aliases":["wontfix", "won't fix"],
     "name": "won't do",
     "description": "This is not something we plan to implement",
     "color": "#f5a133"
