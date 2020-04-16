@@ -2,7 +2,7 @@
 
 This is based on the [github-label-maker](https://github.com/mloskot/github-label-maker)
 
-Python module and script to manage GitHub labels the saner way:
+Python module and script to manage GitHub labels.
 
 ## Requirements
 
@@ -10,7 +10,7 @@ Python module and script to manage GitHub labels the saner way:
 
 ## Usage
 
-Output of `python3 github-label-controller.py -h` should be self-explanatory.
+Output of `python3 github-label-controller.py -h`:
 
 ```
 usage: github-label-controller.py [-h] -r REPOS -l LABELS -t TOKEN [-e] [-d]
