@@ -14,7 +14,7 @@ import sys
 import glm
 import github
 
-_VERSION = "1.0.0"
+_VERSION = "1.1.0"
 
 '''
     Load the label scheme. This should be a JSON list of "owner" and
@@ -146,7 +146,7 @@ def _scan_repos(auth, repositories, scheme_labels, args):
                         try:
                             lm.delete_label(repo_label['name'])
                         except Exception as e:
-                            print("    └── ⚠️  Error deleting label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                            print("    └── ⚠️  Error deleting label: {0} [status code: {1}]".format(e.data, e.status))
                         else:
                             print("    └── ✅ Success: this label has been deleted")
                     else:
@@ -157,7 +157,7 @@ def _scan_repos(auth, repositories, scheme_labels, args):
                     try:
                         lm.edit_label(label_scheme_found, repo_label['name'])
                     except Exception as e:
-                        print("    └── ⚠️  Error updating label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                        print("    └── ⚠️  Error updating label: {0} [status code: {1}]".format(e.data, e.status))
                     else:
                         print("    └── ✅ Success: this label has been updated")
             else:
@@ -174,7 +174,7 @@ def _scan_repos(auth, repositories, scheme_labels, args):
                     try:
                         lm.add_label(scheme_label)
                     except Exception as e:
-                        print("    └── ❌ Error adding label: {0}, {1}: {2} [status code: {3}]".format(e.data["message"], e.data["errors"][0]["resource"], e.data["errors"][0]["code"], e.status))
+                        print("    └── ❌ Error adding label: {0} [status code: {1}]".format(e.data, e.status))
                     else:
                         print("    └── ✅ Success: this label has been added")
 
@@ -192,16 +192,16 @@ def _scan_repos(auth, repositories, scheme_labels, args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Make GitHub labels from definitions in labels/')
     required_args = parser.add_argument_group('required arguments')
-    required_args.add_argument('-r', '--repos', help='GitHub repository scheme. A JSON list of "owner" and "repository" bundled keys', required=True)
-    required_args.add_argument('-l', '--labels', help='GitHub label scheme. A JSON list of "aliases" (list), "name", "description", and "color" bundled keys', required=True)
     required_args.add_argument('-t', '--token', help='GitHub personal access token. Generated here: https://github.com/settings/tokens', required=True)
     optional_args = parser.add_argument_group('optional arguments')
-    optional_args.add_argument('-e', '--execute', help='Execute the changes. Without this only a dry-run happens', action='store_true')
-    optional_args.add_argument('-d', '--delete', help='Deletes any repo that is not associated with the scheme, and has not associated open issues or PRs', action='store_true')
+    optional_args.add_argument('-r', '--repos', help='GitHub repository scheme. A JSON list of "owner" and "repository" bundled keys', default="schemes/repos/bugsnag.json")
+    optional_args.add_argument('-l', '--labels', help='GitHub label scheme. A JSON list of "aliases" (list), "name", "description", and "color" bundled keys', default="schemes/labels/bugsnag.json")
+    optional_args.add_argument('-e', '--execute', help='Execute the changes (adding new labels and editing labels only). Without this only a dry-run happens', action='store_true')
+    optional_args.add_argument('-d', '--delete', help='Deletes any repo label that is not associated with the scheme, and has not associated open issues or PRs. This needs to be used in conjunction with -e/--execute', action='store_true')
     optional_args.add_argument('-v', '--verbose', help='Turn on verbose logging', action='store_true')
     args = parser.parse_args()
 
-    print("\r\n>> github-label-maker.py —— Xander Jones —— v" + _VERSION)
+    print("\r\n>> github-label-controller.py —— Xander Jones —— v" + _VERSION)
 
     if args.verbose:
         glm.set_verbose_logging()

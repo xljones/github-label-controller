@@ -53,6 +53,26 @@
   },
   {
     "owner": "bugsnag",
+    "repository": "bugsnag-go-gin"
+  },
+  {
+    "owner": "bugsnag",
+    "repository": "bugsnag-go-revel"
+  },
+  {
+    "owner": "bugsnag",
+    "repository": "bugsnag-go-negroni"
+  },
+  {
+    "owner": "bugsnag",
+    "repository": "panic-monitor"
+  },
+  {
+    "owner": "bugsnag",
+    "repository": "proc-launcher"
+  },
+  {
+    "owner": "bugsnag",
     "repository": "bugsnag-java"
   },
   {
@@ -93,6 +113,10 @@
   },
   {
     "owner": "bugsnag",
+    "repository": "bugsnag-source-maps"
+  },
+  {
+    "owner": "bugsnag",
     "repository": "bugsnag-sourcemaps"
   },
   {
@@ -121,10 +145,18 @@
   },
   {
     "owner": "bugsnag",
+    "repository": "homebrew-tap"
+  },
+  {
+    "owner": "bugsnag",
     "repository": "panicwrap"
   },
   {
     "owner": "bugsnag",
     "repository": "webpack-bugsnag-plugins"
+  },
+  {
+    "owner": "bugsnag",
+    "repository": "bugsnag-electron"
   }
 ]
