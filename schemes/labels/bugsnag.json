@@ -1,62 +1,68 @@
 [
-  {
-    "aliases":["awaiting user feedback"],
-    "name": "awaiting feedback",
-    "description": "Awaiting a response from a customer. Will be automatically closed after approximately 2 weeks.",
-    "color": "#9292EF"
-  },
-  {
-    "aliases":[],
-    "name": "needs discussion",
-    "description": "Requires internal analysis/discussion",
-    "color": "#37C2D9"
-  },
-  {
-    "aliases":[],
-    "name": "bug",
-    "description": "Confirmed bug",
-    "color": "#FF5A60"
-  },
-  {
-    "aliases":[],
-    "name": "feature request",
-    "description": "Request for a new feature",
-    "color": "#4949E4"
-  },
-  {
-    "aliases":[],
-    "name": "duplicate",
-    "description": "Closed as feature/bug is a duplicate",
-    "color": "#FFADB0"
-  },
-  {
-    "aliases":["won't do", "won't fix", "wont fix"],
-    "name": "wontfix",
-    "description": "This is not something we plan to implement",
-    "color": "#164E57"
-  },
-  {
-    "aliases":[],
-    "name": "backlog",
-    "description": "We hope to fix this feature/bug in the future",
-    "color": "#E9E9E9"
-  },
-  {
-    "aliases":[],
-    "name": "scheduled",
-    "description": "Work is starting on this feature/bug",
-    "color": "#FFA300"
-  },
-  {
-    "aliases":[],
-    "name": "released",
-    "description": "This feature/bug fix has been released",
-    "color": "#8CC63F"
-  },
-  {
-    "aliases":[],
-    "name": "wip",
-    "description": "There is work in progress",
-    "color": "#C3EDF4"
-  }
+    {
+        "aliases": [
+            "awaiting user feedback"
+        ],
+        "name": "awaiting feedback",
+        "description": "Awaiting a response from a customer. Will be automatically closed after approximately 2 weeks.",
+        "color": "#9292EF"
+    },
+    {
+        "aliases": [],
+        "name": "needs discussion",
+        "description": "Requires internal analysis/discussion",
+        "color": "#37C2D9"
+    },
+    {
+        "aliases": [],
+        "name": "bug",
+        "description": "Confirmed bug",
+        "color": "#FF5A60"
+    },
+    {
+        "aliases": [],
+        "name": "feature request",
+        "description": "Request for a new feature",
+        "color": "#4949E4"
+    },
+    {
+        "aliases": [],
+        "name": "duplicate",
+        "description": "Closed as feature/bug is a duplicate",
+        "color": "#FFADB0"
+    },
+    {
+        "aliases": [
+            "won't do",
+            "won't fix",
+            "wont fix"
+        ],
+        "name": "wontfix",
+        "description": "This is not something we plan to implement",
+        "color": "#164E57"
+    },
+    {
+        "aliases": [],
+        "name": "backlog",
+        "description": "We hope to fix this feature/bug in the future",
+        "color": "#E9E9E9"
+    },
+    {
+        "aliases": [],
+        "name": "scheduled",
+        "description": "Work is starting on this feature/bug",
+        "color": "#FFA300"
+    },
+    {
+        "aliases": [],
+        "name": "released",
+        "description": "This feature/bug fix has been released",
+        "color": "#8CC63F"
+    },
+    {
+        "aliases": [],
+        "name": "wip",
+        "description": "There is work in progress",
+        "color": "#C3EDF4"
+    }
 ]
