@@ -1,20 +1,7 @@
-#
-# github-label-controller
-#
-# Xander Jones [2020]
-# Bugsnag
-#
-# This is based on the github-label-maker (https://github.com/mloskot/github-label-maker)
-#
-import argparse
-import json
-import logging
 import os
-import sys
-import glm
-import github
+import json
 
-_VERSION = "1.1.0"
+from github_repo_sync.github.label.handler import GithubLabelHandler
 
 '''
     Load the label scheme. This should be a JSON list of "owner" and
@@ -23,7 +10,7 @@ _VERSION = "1.1.0"
     Arguments:
         args: the user provided arguments from the main thread
 '''
-def _load_labels_scheme(args):
+def load_labels_scheme(args):
     print("\r\n🏷️  LOADING LABELS SCHEME")
     if os.path.exists(args.labels):
         print("├── Using '{0}' label scheme".format(args.labels))
@@ -43,7 +30,7 @@ def _load_labels_scheme(args):
     Arguments:
         args: the user provided arguments from the main thread
 '''
-def _load_repos_scheme(args):
+def load_repos_scheme(args):
     print("\r\n🗄️  LOADING REPOS SCHEME")
     if os.path.exists(args.repos):
         print("├── Using '{0}' repository scheme".format(args.repos))
@@ -100,7 +87,7 @@ def _label_diff_check(lm, repo_label, scheme_label):
         scheme_labels: a list of the labels to apply (loaded through the JSON scheme)
         args: the user provided arguments from the main thread
 '''
-def _scan_repos(auth, repositories, scheme_labels, args):
+def scan_repos(auth, repositories, scheme_labels, args):
     _count_correct = 0
     _count_missing_from_scheme = 0
     _count_missing_from_repo = 0
@@ -110,7 +97,7 @@ def _scan_repos(auth, repositories, scheme_labels, args):
             scheme_labels[index]['repo_match'] = False
 
         print("\r\nConnecting to repository '{0}' owned by '{1}'".format(repo['repository'], repo['owner']))
-        lm = glm.GithubLabelMaker(auth, repo['owner'], repo['repository'], verbose=args.verbose)
+        lm = GithubLabelHandler(auth, repo['owner'], repo['repository'], verbose=args.verbose)
         repo_labels = lm.get_labels()
 
         for repo_label in repo_labels:
@@ -184,51 +171,3 @@ def _scan_repos(auth, repositories, scheme_labels, args):
         print("├── 🔴 Missing from scheme: {0} (will be deleted, if not linked issues with -e/--execute AND -d/--delete options)".format(_count_missing_from_scheme))
         print("├── 🔵 Missing from repo:   {0} (will be added with -e/--execute option)".format(_count_missing_from_repo))
         print("└── 🔵 Needing updates:     {0} (will be updated with -e/--execute option)".format(_count_require_updates))
-
-'''
-    Entry point to script. This is not designed to be imported into another
-    script. Alert the user if this happens.
-'''
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Make GitHub labels from definitions in labels/')
-    required_args = parser.add_argument_group('required arguments')
-    required_args.add_argument('-t', '--token', help='GitHub personal access token. Generated here: https://github.com/settings/tokens', required=True)
-    optional_args = parser.add_argument_group('optional arguments')
-    optional_args.add_argument('-r', '--repos', help='GitHub repository scheme. A JSON list of "owner" and "repository" bundled keys', default="schemes/repos/bugsnag.json")
-    optional_args.add_argument('-l', '--labels', help='GitHub label scheme. A JSON list of "aliases" (list), "name", "description", and "color" bundled keys', default="schemes/labels/bugsnag.json")
-    optional_args.add_argument('-e', '--execute', help='Execute the changes (adding new labels and editing labels only). Without this only a dry-run happens', action='store_true')
-    optional_args.add_argument('-d', '--delete', help='Deletes any repo label that is not associated with the scheme, and has not associated open issues or PRs. This needs to be used in conjunction with -e/--execute', action='store_true')
-    optional_args.add_argument('-v', '--verbose', help='Turn on verbose logging', action='store_true')
-    args = parser.parse_args()
-
-    print("\r\n>> github-label-controller.py —— Xander Jones —— v" + _VERSION)
-
-    if args.verbose:
-        glm.set_verbose_logging()
-
-    labels = _load_labels_scheme(args)
-    repositories = _load_repos_scheme(args)
-
-    print("\r\n🌐 CONNECTING TO GITHUB")
-    gh = glm.GithubAuthenticator(args.token)
-
-    if gh.is_authenticated():
-        print("├── Authorized to GitHub as user '{0}'".format(gh.get_username()))
-        print("└── Rate limit: {0}, remaining: {1}".format(gh.get_rate_limit().core.limit, gh.get_rate_limit().core.remaining))
-        if args.execute:
-            approve = input("🔒  You've enabled --execute. This will update and add new labels. Are you sure? [Y/n]: ")
-            if not approve.lower() == "y":
-                print(">> User did not authorize changes")
-                exit(1)
-        if args.delete:
-            approve = input("🔒  You've enabled --delete. This will delete labels that do not match the scheme and have no associated open issues/PRs. Are you sure? [Y/n]: ")
-            if not approve.lower() == "y":
-                print(">> User did not authorize changes")
-                exit(1)
-        _scan_repos(gh.get_auth(), repositories, labels, args)
-
-    else:
-        print("└── Unable to authenticate with GitHub - script exiting")
-        exit(1)
-else:
-    print("Error: This script should be invoked directly")

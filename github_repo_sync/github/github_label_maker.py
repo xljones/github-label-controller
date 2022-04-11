@@ -1,58 +1,11 @@
-#
-# github-label-controller
-#
-# Xander Jones [2020]
-# Bugsnag
-#
-# This is based on the github-label-maker (https://github.com/mloskot/github-label-maker)
-#
-import logging
 import github
-
-def set_verbose_logging():
-    logging.basicConfig(level=logging.INFO)
-
-class GithubAuthenticator:
-    _authenticated = False
-    _github_login = []
-    _rate_limit = []
-    _username = []
-
-    def __init__(self, github_token):
-        self._github_login = github.Github(github_token)
-        try:
-            self._username = self._github_login.get_user().login
-        except Exception as e:
-            self._authenticated = False
-            logging.error("Unable to login: " + str(e))
-        else:
-            self._authenticated = True
-            self._rate_limit = self._github_login.get_rate_limit()
-
-    def get_auth(self):
-        return self._github_login
-
-    def get_username(self):
-        if self.is_authenticated:
-            return self._username
-        else:
-            return Error("Can't get username. A user is not authenticated")
-
-    def get_rate_limit(self):
-        if self.is_authenticated:
-            return self._rate_limit
-        else:
-            return Error("Can't get rate limit. A user is not authenticated")
-
-    def is_authenticated(self):
-        return self._authenticated
+import logging
 
 class GithubLabelMaker:
     def __init__(self, g, github_owner_name, github_repo_name, verbose=False):
         assert isinstance(github_owner_name, str)
         assert isinstance(github_repo_name, str)
-        if verbose:
-            set_verbose_logging()
+
         # Repository either owned by user or one of user's organization
         orgs = [org.login for org in g.get_user().get_orgs()]
         if github_owner_name in orgs:
